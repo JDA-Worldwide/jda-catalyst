@@ -4,6 +4,7 @@ import { visionTool } from "@sanity/vision";
 import { presentationTool } from "sanity/presentation";
 import { schemaTypes } from "./schemas";
 import { locations, mainDocuments } from "./lib/resolve";
+import { structure } from "./lib/structure";
 import StudioLogo from "./studio/logo";
 
 export default defineConfig({
@@ -14,7 +15,7 @@ export default defineConfig({
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   icon: StudioLogo,
   plugins: [
-    structureTool(),
+    structureTool({ structure }),
     presentationTool({
       resolve: { locations, mainDocuments },
       previewUrl: {

@@ -72,11 +72,12 @@ async function main() {
   }
 
   const seedIds = [
-    "seed-global-settings",
-    "seed-navigation",
-    "seed-footer",
+    "globalSettings",
+    "navigation",
+    "footer",
     "seed-homepage",
     "seed-about",
+    "seed-contact",
     "seed-blog-post-1",
     "seed-team-1",
     "seed-team-2",
@@ -172,7 +173,7 @@ async function main() {
   console.log("  Creating global settings...");
 
   await client.createOrReplace({
-    _id: "seed-global-settings",
+    _id: "globalSettings",
     _type: "globalSettings",
     siteTitle: "Demo Site",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
@@ -195,7 +196,7 @@ async function main() {
   console.log("  Creating navigation...");
 
   await client.createOrReplace({
-    _id: "seed-navigation",
+    _id: "navigation",
     _type: "navigation",
     items: [
       { _key: key(), _type: "object", label: "Home", url: "/", isExternal: false },
@@ -224,7 +225,7 @@ async function main() {
   console.log("  Creating footer...");
 
   await client.createOrReplace({
-    _id: "seed-footer",
+    _id: "footer",
     _type: "footer",
     columns: [
       {
