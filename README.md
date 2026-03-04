@@ -34,6 +34,9 @@ cp .env.local.example .env.local
 
 # Fill in your Sanity project ID, dataset, and API token in .env.local
 
+# Seed demo content (optional — populates Sanity with sample pages, navigation, blog post, and placeholder images)
+npm run seed
+
 # Start development server
 npm run dev
 ```

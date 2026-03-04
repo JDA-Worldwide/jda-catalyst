@@ -111,7 +111,7 @@ cd my-client-site
 cp .env.local.example .env.local
 ```
 
-Fill in `.env.local` as you work through the steps below.
+Fill in `.env.local` as you work through the steps below. Once Sanity is configured (step 2), you can run `npm run seed` to populate demo content and see the site in action immediately.
 
 ---
 
@@ -409,7 +409,19 @@ This webhook tells the site to regenerate pages when content changes in Sanity.
 
 ## 9. Sanity Content Setup
 
-After deployment, populate the essential content in Sanity Studio. This is the minimum needed for the site to function:
+### Quick start with demo content
+
+To see the site working immediately with sample pages, navigation, a blog post, and placeholder images:
+
+```bash
+npm run seed
+```
+
+This creates demo content in your Sanity dataset so you can explore the site and Studio before adding real client content. Run with `--force` to overwrite existing seed data. Once you're ready, replace the demo content in Studio with the client's actual content.
+
+### Manual setup
+
+If you prefer to build content from scratch, populate the essential content in Sanity Studio. This is the minimum needed for the site to function:
 
 ### 9.1 Global Settings (required)
 
