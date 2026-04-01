@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { sanityFetch } from "@/sanity/lib/client";
+import { sanityFetch } from "@/sanity/lib/live";
 import { blogPostBySlugQuery, allBlogPostsQuery, settingsQuery } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
 import { formatDate } from "@/lib/utils";
@@ -32,12 +32,13 @@ interface GlobalSettings {
 }
 
 export async function generateStaticParams() {
-  const posts = await sanityFetch<{ slug: string }[]>({
+  const { data } = await sanityFetch({
     query: allBlogPostsQuery,
-    tags: ["blogPost"],
+    perspective: "published",
+    stega: false,
   });
 
-  return posts.map((p) => ({ slug: p.slug }));
+  return (data as { slug: string }[]).map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({
@@ -46,16 +47,18 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const [post, settings] = await Promise.all([
-    sanityFetch<BlogPost | null>({ query: blogPostBySlugQuery, params: { slug }, tags: ["blogPost"] }),
-    sanityFetch<GlobalSettings | null>({ query: settingsQuery, tags: ["globalSettings"] }),
+  const [{ data: post }, { data: settings }] = await Promise.all([
+    sanityFetch({ query: blogPostBySlugQuery, params: { slug }, stega: false }),
+    sanityFetch({ query: settingsQuery, stega: false }),
   ]);
 
   if (!post) return {};
 
-  const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const typedPost = post as BlogPost;
+  const typedSettings = settings as GlobalSettings | null;
+  const siteUrl = typedSettings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   return buildMetadata(
-    { title: post.title, slug: `blog/${post.slug}`, seo: post.seo },
+    { title: typedPost.title, slug: `blog/${typedPost.slug}`, seo: typedPost.seo },
     siteUrl
   );
 }
@@ -66,42 +69,44 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [post, settings] = await Promise.all([
-    sanityFetch<BlogPost | null>({ query: blogPostBySlugQuery, params: { slug }, tags: ["blogPost"] }),
-    sanityFetch<GlobalSettings | null>({ query: settingsQuery, tags: ["globalSettings"] }),
+  const [{ data: post }, { data: settings }] = await Promise.all([
+    sanityFetch({ query: blogPostBySlugQuery, params: { slug } }),
+    sanityFetch({ query: settingsQuery }),
   ]);
 
   if (!post) notFound();
 
-  const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const typedPost = post as BlogPost;
+  const typedSettings = settings as GlobalSettings | null;
+  const siteUrl = typedSettings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-section">
       <JsonLd
         data={articleSchema({
-          headline: post.title,
-          description: post.seo?.metaDescription || post.excerpt,
-          url: `${siteUrl}/blog/${post.slug}`,
-          image: post.featuredImage?.asset
-            ? urlFor(post.featuredImage).width(1200).height(630).url()
+          headline: typedPost.title,
+          description: typedPost.seo?.metaDescription || typedPost.excerpt,
+          url: `${siteUrl}/blog/${typedPost.slug}`,
+          image: typedPost.featuredImage?.asset
+            ? urlFor(typedPost.featuredImage).width(1200).height(630).url()
             : undefined,
-          author: post.author,
-          datePublished: post.publishedAt,
+          author: typedPost.author,
+          datePublished: typedPost.publishedAt,
         })}
       />
       <header className="mb-12">
         <h1 className="font-display text-4xl font-bold lg:text-5xl">
-          {post.title}
+          {typedPost.title}
         </h1>
         <div className="mt-4 flex items-center gap-4 text-brand-muted">
-          {post.author && <span>{post.author}</span>}
-          <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+          {typedPost.author && <span>{typedPost.author}</span>}
+          <time dateTime={typedPost.publishedAt}>{formatDate(typedPost.publishedAt)}</time>
         </div>
       </header>
-      {post.featuredImage?.asset && (
+      {typedPost.featuredImage?.asset && (
         <div className="relative mb-12 aspect-[16/9] overflow-hidden rounded-lg">
           <SanityImage
-            image={post.featuredImage}
+            image={typedPost.featuredImage}
             width={1200}
             height={675}
             sizes="(max-width: 768px) 100vw, 48rem"
@@ -110,7 +115,7 @@ export default async function BlogPostPage({
           />
         </div>
       )}
-      {post.body && <PortableText value={post.body} />}
+      {typedPost.body && <PortableText value={typedPost.body} />}
     </article>
   );
 }
