@@ -23,7 +23,7 @@ No test framework is configured.
 
 - `src/app/(site)/` — Public pages with shared layout (Navigation + Footer)
 - `src/app/studio/` — Embedded Sanity Studio at `/studio`
-- `src/app/api/` — API routes: contact form, draft-mode toggle, ISR revalidation, Turnstile verification
+- `src/app/api/` — API routes: contact form, draft-mode toggle, Turnstile verification
 - Homepage is the page document with `slug: "home"`
 
 ### Page Builder Pattern
@@ -39,11 +39,86 @@ To add a new module: create schema in `schemas/objects/`, register in `schemas/i
 
 ### Sanity Integration
 
-- Client + `sanityFetch` helper in `src/sanity/lib/client.ts` — uses Next.js cache tags for ISR
+#### Data Fetching (Live Content API)
+
+All data fetching uses `sanityFetch` from `src/sanity/lib/live.ts`, powered by Sanity's Live Content API (`defineLive`). This single function handles:
+
+- **Published content**: Automatic caching and CDN delivery for production visitors
+- **Draft content**: When Draft Mode is active (via Presentation tool), fetches unpublished content with a read token
+- **Stega encoding**: In Draft Mode, embeds invisible Content Source Map characters in strings for click-to-edit overlays
+- **Real-time updates**: The `SanityLive` component (rendered in root layout) subscribes to content changes and triggers re-renders automatically
+
+**Key files:**
+- `src/sanity/lib/live.ts` — `defineLive` setup, exports `sanityFetch` and `SanityLive`
+- `src/sanity/lib/client.ts` — Base Sanity client with `stega.studioUrl` for overlay linking
+- `src/sanity/lib/token.ts` — Server-only read token (Viewer permissions)
+
+**Usage pattern:**
+```ts
+import { sanityFetch } from "@/sanity/lib/live";
+
+// Page component — stega active in Draft Mode, clean in production
+const { data } = await sanityFetch({ query: MY_QUERY });
+
+// generateMetadata — always disable stega to protect SEO tags
+const { data } = await sanityFetch({ query: MY_QUERY, stega: false });
+
+// generateStaticParams — published only, no stega
+const { data } = await sanityFetch({ query: SLUGS_QUERY, perspective: "published", stega: false });
+```
+
+**Important:** Always destructure `{ data }` from the return value. The old `sanityFetch` in `client.ts` returned raw values — the `defineLive` version wraps them in `{ data }`.
+
+#### Visual Editing & Live Preview
+
+The Presentation tool in Sanity Studio enables visual editing:
+
+1. Editor opens Presentation tool → Studio loads the frontend in an iframe
+2. Studio calls `/api/draft-mode/enable` → activates Next.js Draft Mode
+3. `sanityFetch` detects Draft Mode → returns draft content with stega encoding
+4. `<VisualEditing />` reads stega strings → renders click-to-edit overlays
+5. Editor clicks overlay → Studio navigates to that document/field
+6. Editor changes content → `<SanityLive />` picks up mutation → page re-renders
+
+**Key files:**
+- `src/sanity/lib/resolve.ts` — Maps document types to frontend URLs
+- `src/app/api/draft-mode/enable/route.ts` — Handshake endpoint for Presentation tool
+- `src/app/api/draft-mode/disable/route.ts` — Exit Draft Mode, redirect to homepage
+- `src/components/global/DisableDraftMode.tsx` — Floating exit button (shown outside Studio iframe)
+
+#### Stega: The Golden Rule
+
+When Visual Editing is active, string values contain invisible characters. You **must** clean them before using strings for logic:
+
+```ts
+import { stegaClean } from "@sanity/client/stega";
+
+// BAD: stega chars break equality checks
+if (align === "center") { ... }
+
+// GOOD: clean first
+if (stegaClean(align) === "center") { ... }
+```
+
+Don't clean strings used for rendering (`<h1>{title}</h1>`) — those need the stega chars for overlays to work.
+
+#### Other Sanity Files
+
 - GROQ queries centralized in `src/sanity/lib/queries.ts`
-- Revalidation via webhook: `POST /api/revalidate` with `x-sanity-secret` header triggers `revalidateTag()` by document type
-- Presentation tool live preview configured in `src/sanity/lib/resolve.ts`
+- Presentation tool configured in `src/sanity/sanity.config.ts`
 - Singleton documents: globalSettings, navigation, footer (custom desk structure in `src/sanity/lib/structure.ts`)
+
+### Environment Variables
+
+| Variable | Purpose | Scope |
+|----------|---------|-------|
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project ID | Public (client + server) |
+| `NEXT_PUBLIC_SANITY_DATASET` | Dataset name (`production`) | Public |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | API version date | Public |
+| `SANITY_API_TOKEN` | Editor/Admin token for write ops (seed script, contact form) | Server only |
+| `SANITY_API_READ_TOKEN` | Viewer token for Live Content API + Draft Mode | Server only |
+| `RESEND_API_KEY` | Email sending via Resend | Server only |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site URL | Public |
 
 ### Design Tokens
 
@@ -56,7 +131,7 @@ All brand colors, fonts, spacing, and radii are CSS custom properties defined in
 ### Component Conventions
 
 - Modules: `src/components/modules/ModuleName/index.tsx` + `types.ts`
-- Global components (Navigation, Footer, SkipLink): `src/components/global/`
+- Global components (Navigation, Footer, SkipLink, DisableDraftMode): `src/components/global/`
 - Shared UI (Button, Container, SanityImage, PortableText): `src/components/ui/`
 - `cn()` utility from `src/lib/utils.ts` for merging Tailwind classes (clsx + tailwind-merge)
 
@@ -66,6 +141,7 @@ All brand colors, fonts, spacing, and radii are CSS custom properties defined in
 - Shared metadata builder in `src/lib/metadata.ts`
 - Dynamic sitemap at `src/app/sitemap.ts`, robots at `src/app/robots.ts`
 - FAQ modules automatically get FAQPage JSON-LD via PageBuilder
+- **Always pass `stega: false`** when fetching data for `generateMetadata` or `generateStaticParams`
 
 ### External Services
 

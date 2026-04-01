@@ -1,25 +1,26 @@
 import type { MetadataRoute } from "next";
-import { sanityFetch } from "@/sanity/lib/client";
+import { sanityFetch } from "@/sanity/lib/live";
 import { allPagesQuery, allBlogPostsQuery } from "@/sanity/lib/queries";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [pages, posts] = await Promise.all([
-    sanityFetch<{ slug: string }[]>({ query: allPagesQuery }),
-    sanityFetch<{ slug: string; publishedAt: string }[]>({
-      query: allBlogPostsQuery,
-    }),
+  const [{ data: pages }, { data: posts }] = await Promise.all([
+    sanityFetch({ query: allPagesQuery, perspective: "published", stega: false }),
+    sanityFetch({ query: allBlogPostsQuery, perspective: "published", stega: false }),
   ]);
 
-  const pageEntries: MetadataRoute.Sitemap = pages.map((page) => ({
+  const typedPages = (pages ?? []) as { slug: string }[];
+  const typedPosts = (posts ?? []) as { slug: string; publishedAt: string }[];
+
+  const pageEntries: MetadataRoute.Sitemap = typedPages.map((page) => ({
     url: page.slug === "home" ? siteUrl : `${siteUrl}/${page.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
     priority: page.slug === "home" ? 1 : 0.8,
   }));
 
-  const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
+  const postEntries: MetadataRoute.Sitemap = typedPosts.map((post) => ({
     url: `${siteUrl}/blog/${post.slug}`,
     lastModified: post.publishedAt ? new Date(post.publishedAt) : new Date(),
     changeFrequency: "monthly",

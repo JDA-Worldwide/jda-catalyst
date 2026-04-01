@@ -3,26 +3,17 @@ import { draftMode } from "next/headers";
 import { VisualEditing } from "next-sanity/visual-editing";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { sanityFetch } from "@/sanity/lib/client";
+import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { settingsQuery } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
 import { JsonLd, organizationSchema } from "@/lib/jsonLd";
+import DisableDraftMode from "@/components/global/DisableDraftMode";
 import "./globals.css";
 
-interface GlobalSettings {
-  siteTitle?: string;
-  siteUrl?: string;
-  logo?: { asset: { _ref: string } };
-  defaultSeo?: {
-    metaDescription?: string;
-  };
-  socialLinks?: string[];
-}
-
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await sanityFetch<GlobalSettings | null>({
+  const { data: settings } = await sanityFetch({
     query: settingsQuery,
-    tags: ["globalSettings"],
+    stega: false,
   });
 
   const siteTitle = settings?.siteTitle || "JDA Catalyst";
@@ -44,10 +35,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const settings = await sanityFetch<GlobalSettings | null>({
-    query: settingsQuery,
-    tags: ["globalSettings"],
-  });
+  const { data: settings } = await sanityFetch({ query: settingsQuery });
 
   const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -71,7 +59,13 @@ export default async function RootLayout({
           />
         )}
         {children}
-        {(await draftMode()).isEnabled && <VisualEditing />}
+        <SanityLive />
+        {(await draftMode()).isEnabled && (
+          <>
+            <VisualEditing />
+            <DisableDraftMode />
+          </>
+        )}
         <Analytics />
         <SpeedInsights />
       </body>
