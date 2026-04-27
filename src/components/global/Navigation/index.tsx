@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { stegaClean } from "@sanity/client/stega";
 import { cn } from "@/lib/utils";
 import type { NavigationProps, NavItem } from "./types";
 
@@ -88,8 +89,9 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
   const ref = useRef<HTMLLIElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
-  const menuId = `desktop-menu-${(item.url ?? "").replace(/\W/g, "")}`;
+  const cleanUrl = stegaClean(item.url ?? "");
+  const isActive = pathname === cleanUrl || pathname.startsWith(cleanUrl + "/");
+  const menuId = `desktop-menu-${cleanUrl.replace(/\W/g, "")}`;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -135,7 +137,7 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
     return (
       <li>
         <a
-          href={item.url}
+          href={cleanUrl}
           target={item.isExternal ? "_blank" : undefined}
           rel={item.isExternal ? "noopener noreferrer" : undefined}
           aria-label={item.isExternal ? `${item.label} (opens in new tab)` : undefined}
@@ -186,7 +188,7 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
           {item.children!.map((child) => (
             <li key={child.url} role="none">
               <a
-                href={child.url}
+                href={stegaClean(child.url)}
                 role="menuitem"
                 target={child.isExternal ? "_blank" : undefined}
                 rel={child.isExternal ? "noopener noreferrer" : undefined}
@@ -206,14 +208,15 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
 function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: string; onClose: () => void }) {
   const [open, setOpen] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
-  const menuId = `mobile-submenu-${(item.url ?? "").replace(/\W/g, "")}`;
+  const cleanUrl = stegaClean(item.url ?? "");
+  const isActive = pathname === cleanUrl || pathname.startsWith(cleanUrl + "/");
+  const menuId = `mobile-submenu-${cleanUrl.replace(/\W/g, "")}`;
 
   if (!hasChildren) {
     return (
       <li>
         <a
-          href={item.url}
+          href={cleanUrl}
           target={item.isExternal ? "_blank" : undefined}
           rel={item.isExternal ? "noopener noreferrer" : undefined}
           aria-label={item.isExternal ? `${item.label} (opens in new tab)` : undefined}
@@ -259,7 +262,7 @@ function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: s
           {item.children!.map((child) => (
             <li key={child.url}>
               <a
-                href={child.url}
+                href={stegaClean(child.url)}
                 target={child.isExternal ? "_blank" : undefined}
                 rel={child.isExternal ? "noopener noreferrer" : undefined}
                 aria-label={child.isExternal ? `${child.label} (opens in new tab)` : undefined}
