@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { sanityFetch } from "@/sanity/lib/client";
+import { sanityFetch } from "@/sanity/lib/live";
 import { homepageQuery, settingsQuery } from "@/sanity/lib/queries";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd, webPageSchema } from "@/lib/jsonLd";
@@ -22,21 +22,21 @@ interface GlobalSettings {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [page, settings] = await Promise.all([
-    sanityFetch<PageData | null>({ query: homepageQuery, tags: ["page"] }),
-    sanityFetch<GlobalSettings | null>({ query: settingsQuery, tags: ["globalSettings"] }),
+  const [{ data: page }, { data: settings }] = await Promise.all([
+    sanityFetch({ query: homepageQuery, stega: false }),
+    sanityFetch({ query: settingsQuery, stega: false }),
   ]);
 
   if (!page) return { title: "Home" };
 
   const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  return buildMetadata(page, siteUrl);
+  return buildMetadata(page as PageData, siteUrl);
 }
 
 export default async function HomePage() {
-  const [page, settings] = await Promise.all([
-    sanityFetch<PageData | null>({ query: homepageQuery, tags: ["page"] }),
-    sanityFetch<GlobalSettings | null>({ query: settingsQuery, tags: ["globalSettings"] }),
+  const [{ data: page }, { data: settings }] = await Promise.all([
+    sanityFetch({ query: homepageQuery }),
+    sanityFetch({ query: settingsQuery }),
   ]);
 
   if (!page) {
@@ -52,20 +52,22 @@ export default async function HomePage() {
     );
   }
 
-  const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const typedPage = page as PageData;
+  const typedSettings = settings as GlobalSettings | null;
+  const siteUrl = typedSettings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   return (
     <>
       <JsonLd
         data={webPageSchema({
-          title: page.seo?.metaTitle || page.title,
-          description: page.seo?.metaDescription,
+          title: typedPage.seo?.metaTitle || typedPage.title,
+          description: typedPage.seo?.metaDescription,
           url: siteUrl,
-          organizationName: settings?.siteTitle,
+          organizationName: typedSettings?.siteTitle,
         })}
       />
-      <h1 className="sr-only">{page.title}</h1>
-      <PageBuilder modules={page.modules} />
+      <h1 className="sr-only">{typedPage.title}</h1>
+      <PageBuilder modules={typedPage.modules} />
     </>
   );
 }

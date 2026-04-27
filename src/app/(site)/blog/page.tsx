@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { sanityFetch } from "@/sanity/lib/client";
+import { sanityFetch } from "@/sanity/lib/live";
 import { allBlogPostsQuery } from "@/sanity/lib/queries";
 import { formatDate } from "@/lib/utils";
 import SanityImage from "@/components/ui/SanityImage";
@@ -19,10 +19,8 @@ interface BlogPostPreview {
 }
 
 export default async function BlogListingPage() {
-  const posts = await sanityFetch<BlogPostPreview[]>({
-    query: allBlogPostsQuery,
-    tags: ["blogPost"],
-  });
+  const { data } = await sanityFetch({ query: allBlogPostsQuery });
+  const posts = (data ?? []) as BlogPostPreview[];
 
   return (
     <section className="mx-auto max-w-[var(--container-content)] px-4 py-section">
