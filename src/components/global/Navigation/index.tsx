@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { NavigationProps, NavItem } from "./types";
@@ -10,11 +11,6 @@ export default function Navigation({ data, siteTitle }: NavigationProps) {
   const pathname = usePathname();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -40,9 +36,9 @@ export default function Navigation({ data, siteTitle }: NavigationProps) {
         aria-label="Main navigation"
         className="mx-auto flex max-w-[var(--container-content)] items-center justify-between px-4 py-4 sm:px-6 lg:px-8"
       >
-        <a href="/" className="font-display text-xl font-bold text-brand-primary">
+        <Link href="/" className="font-display text-xl font-bold text-brand-primary">
           {siteTitle || "JDA Catalyst"}
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <ul className="hidden items-center gap-1 md:flex">
@@ -78,7 +74,7 @@ export default function Navigation({ data, siteTitle }: NavigationProps) {
         <div id="mobile-menu" ref={mobileMenuRef} className="border-t border-brand-border md:hidden">
           <ul className="space-y-1 px-4 py-4">
             {data.items.map((item, i) => (
-              <MobileNavItem key={`${item.url}-${i}`} item={item} pathname={pathname} />
+              <MobileNavItem key={`${item.url}-${i}`} item={item} pathname={pathname} onClose={() => setMobileOpen(false)} />
             ))}
           </ul>
         </div>
@@ -93,7 +89,7 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
   const menuRef = useRef<HTMLUListElement>(null);
   const hasChildren = item.children && item.children.length > 0;
   const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
-  const menuId = `desktop-menu-${item.url.replace(/\W/g, "")}`;
+  const menuId = `desktop-menu-${(item.url ?? "").replace(/\W/g, "")}`;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -207,11 +203,11 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
   );
 }
 
-function MobileNavItem({ item, pathname }: { item: NavItem; pathname: string }) {
+function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: string; onClose: () => void }) {
   const [open, setOpen] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
   const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
-  const menuId = `mobile-submenu-${item.url.replace(/\W/g, "")}`;
+  const menuId = `mobile-submenu-${(item.url ?? "").replace(/\W/g, "")}`;
 
   if (!hasChildren) {
     return (
@@ -221,6 +217,7 @@ function MobileNavItem({ item, pathname }: { item: NavItem; pathname: string }) 
           target={item.isExternal ? "_blank" : undefined}
           rel={item.isExternal ? "noopener noreferrer" : undefined}
           aria-label={item.isExternal ? `${item.label} (opens in new tab)` : undefined}
+          onClick={onClose}
           className={cn(
             "block rounded px-3 py-2 text-base font-medium hover:bg-brand-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary",
             isActive ? "text-brand-secondary" : "text-brand-text"
@@ -266,6 +263,7 @@ function MobileNavItem({ item, pathname }: { item: NavItem; pathname: string }) 
                 target={child.isExternal ? "_blank" : undefined}
                 rel={child.isExternal ? "noopener noreferrer" : undefined}
                 aria-label={child.isExternal ? `${child.label} (opens in new tab)` : undefined}
+                onClick={onClose}
                 className="block rounded px-3 py-2 text-sm text-brand-muted hover:bg-brand-surface hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary"
               >
                 {child.label}
