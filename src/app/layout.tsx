@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { draftMode } from "next/headers";
-import { VisualEditing } from "next-sanity/visual-editing";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { settingsQuery } from "@/sanity/lib/queries";
 import { urlFor } from "@/sanity/lib/image";
 import { JsonLd, organizationSchema } from "@/lib/jsonLd";
-import DisableDraftMode from "@/components/global/DisableDraftMode";
+import VisualEditingClient from "@/components/global/VisualEditingClient";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -60,12 +59,7 @@ export default async function RootLayout({
         )}
         {children}
         <SanityLive />
-        {(await draftMode()).isEnabled && (
-          <>
-            <VisualEditing />
-            <DisableDraftMode />
-          </>
-        )}
+        {(await draftMode()).isEnabled && <VisualEditingClient />}
         <Analytics />
         <SpeedInsights />
       </body>

@@ -1,4 +1,6 @@
 import type { ComponentType } from "react";
+import { stegaClean } from "@sanity/client/stega";
+import { cn } from "@/lib/utils";
 import Hero from "./modules/Hero";
 import TextBlock from "./modules/TextBlock";
 import CTA from "./modules/CTA";
@@ -17,6 +19,8 @@ import { toPlainText, type PortableTextBlock } from "@portabletext/react";
 interface Module {
   _type: string;
   _key: string;
+  colorScheme?: "light" | "surface" | "neutral-1" | "neutral-2" | "dark";
+  anchorSlug?: { current?: string };
   [key: string]: unknown;
 }
 
@@ -44,6 +48,7 @@ const moduleMap: Record<string, ComponentType<any>> = {
   contactForm: ContactForm,
 };
 
+// Full-bleed modules render edge-to-edge with no section padding wrapper.
 const fullBleedModules = new Set(["hero", "cta"]);
 
 function buildFaqJsonLd(module: FAQModule) {
@@ -72,9 +77,21 @@ export default function PageBuilder({ modules }: PageBuilderProps) {
           return null;
         }
 
-        if (fullBleedModules.has(module._type)) {
+        const scheme = stegaClean(module.colorScheme);
+        const schemeClass =
+          scheme === "dark" ? "scheme-dark" :
+          scheme === "surface" ? "scheme-surface" :
+          scheme === "neutral-1" ? "scheme-neutral-1" :
+          scheme === "neutral-2" ? "scheme-neutral-2" :
+          undefined;
+
+        const anchorId = stegaClean(module.anchorSlug?.current) || undefined;
+        const scrollClass = anchorId ? "scroll-mt-[var(--header-height)]" : undefined;
+        const isFullBleed = fullBleedModules.has(module._type);
+
+        if (isFullBleed) {
           return (
-            <div key={module._key}>
+            <div key={module._key} id={anchorId} className={cn(schemeClass, scrollClass)}>
               {module._type === "faq" && buildFaqJsonLd(module as FAQModule)}
               <Component {...module} />
             </div>
@@ -82,10 +99,12 @@ export default function PageBuilder({ modules }: PageBuilderProps) {
         }
 
         return (
-          <section key={module._key} className="py-section">
-            {module._type === "faq" && buildFaqJsonLd(module as FAQModule)}
-            <Component {...module} />
-          </section>
+          <div key={module._key} id={anchorId} className={cn(schemeClass, scrollClass)}>
+            <section className="mx-auto max-w-container py-section">
+              {module._type === "faq" && buildFaqJsonLd(module as FAQModule)}
+              <Component {...module} />
+            </section>
+          </div>
         );
       })}
     </>
