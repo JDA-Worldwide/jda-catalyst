@@ -1,4 +1,6 @@
 import { defineType, defineField } from "sanity";
+import { colorSchemeField } from "./_colorSchemeField";
+import { anchorSlugField } from "./_anchorSlugField";
 
 export default defineType({
   name: "hero",
@@ -27,15 +29,10 @@ export default defineType({
       title: "Background Image",
       type: "image",
       options: { hotspot: true },
-      fields: [
-        defineField({
-          name: "alt",
-          title: "Alt Text",
-          type: "string",
-          validation: (rule) => rule.required(),
-        }),
-      ],
+      description: "Decorative background — no alt text required.",
     }),
+    colorSchemeField,
+    anchorSlugField,
   ],
   preview: {
     select: { title: "heading" },
