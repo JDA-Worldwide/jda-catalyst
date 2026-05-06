@@ -147,6 +147,9 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=your-project-id
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 SANITY_API_TOKEN=your-editor-token
+# Optional locally — deploy token so `npm run build` can run `sanity schema deploy` without `sanity login`
+# Required on Vercel for production builds (see "Org Dashboard & production builds" below)
+SANITY_AUTH_TOKEN=
 ```
 
 ### Update Sanity Studio config (if needed)
@@ -180,6 +183,18 @@ Visit `http://localhost:3000/studio` — you should see Sanity Studio load with 
 - **Structure** — primary content editing interface (pages, blog posts, settings)
 - **Presentation** — live visual editing with click-to-edit overlays (works automatically once the API token is set)
 - **Vision** — GROQ query playground for testing queries
+
+### Org Dashboard & production builds (embedded Studio)
+
+Studio is embedded in Next.js at **`/studio`**. Production builds run **`sanity manifest extract`** and **`sanity schema deploy`** before `next build` so the [Sanity org Dashboard](https://www.sanity.io/docs/dashboard/dashboard-configure) and schema tooling stay in sync with your deployed Studio.
+
+**What you need to do once per project:**
+
+1. **Deploy token for CI/Vercel** — In Sanity Manage → **API → Tokens**, create a token with **deploy** (or equivalent) permissions used only for builds. Add it to Vercel (and optionally `.env.local`) as **`SANITY_AUTH_TOKEN`**. Locally, `sanity login` is often enough so you can omit the token for ad-hoc CLI use.
+2. **Canonical Studio URL** — In [Sanity Manage](https://www.sanity.io/manage) → your project, set the public Studio URL to the **full production URL including `/studio`**, e.g. `https://acme-corp.com/studio`.
+3. **CORS** — You already added the production site origin; ensure it matches the URL editors use to open Studio.
+
+**Repo mechanics (reference):** Root `sanity.config.ts` re-exports the Studio config for the CLI; `sanity.cli.ts` supplies `projectId` / `dataset` and loads env like Next; manifests land in `public/studio/static/` (gitignored, regenerated each build); `src/app/studio/layout.tsx` loads the Dashboard **bridge** script (`core.sanity-cdn.com/bridge.js`) required for **next-sanity**. To run only Next without the Sanity CLI steps, use `npm run build:next`.
 
 ---
 
@@ -359,6 +374,7 @@ In Vercel → Project → **Settings → Environment Variables**, add all variab
 | `NEXT_PUBLIC_SANITY_DATASET` | `production` | `staging` | `production` |
 | `NEXT_PUBLIC_SANITY_API_VERSION` | `2024-01-01` | Same | Same |
 | `SANITY_API_TOKEN` | Editor token | Same | Same |
+| `SANITY_AUTH_TOKEN` | Deploy token (for `sanity schema deploy` in `npm run build`) | Same | Optional if not running full build locally |
 | `RESEND_API_KEY` | Live key | Test key (or omit) | Test key (or omit) |
 | `CONTACT_FORM_SENDER` | `noreply@acme-corp.com` | Same | Same |
 | `CONTACT_FORM_RECIPIENT` | `info@acme-corp.com` | Same | Same |
@@ -504,6 +520,8 @@ Run through this before going live:
 
 ### Configuration
 - [ ] Sanity project created with API token
+- [ ] **`SANITY_AUTH_TOKEN`** (deploy) set on Vercel so production builds complete (`sanity schema deploy`)
+- [ ] Canonical **Studio URL** set in Sanity Manage to production URL including `/studio` ([Dashboard / embedded Studio](https://www.sanity.io/docs/dashboard/dashboard-configure))
 - [ ] Sanity CORS origins added (production URL + localhost)
 - [ ] Resend domain verified (DKIM, SPF, DMARC records added)
 - [ ] `CONTACT_FORM_SENDER` and `CONTACT_FORM_RECIPIENT` env vars set for this client

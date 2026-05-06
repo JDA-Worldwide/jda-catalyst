@@ -4,10 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "studio:manifest": "sanity manifest extract --path public/studio/static",
+    "studio:schema:deploy": "sanity schema deploy --manifest-dir public/studio/static --no-extract-manifest",
+    "build:next": "next build",
+    "build": "npm run studio:manifest && npm run studio:schema:deploy && next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "node --env-file=.env.local scripts/seed.mjs"
+    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@portabletext/react": "^6.0.2",

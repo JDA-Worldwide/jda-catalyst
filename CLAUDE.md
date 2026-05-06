@@ -9,10 +9,13 @@ JDA Catalyst is a starter template for JDA client websites. Next.js 16 (App Rout
 ## Commands
 
 ```bash
-npm run dev          # Start dev server (site at :3000, Studio at :3000/studio)
-npm run build        # Production build
-npm run lint         # ESLint (next/core-web-vitals + typescript)
-npm run seed         # Seed Sanity with demo content (requires .env.local)
+npm run dev                  # Start dev server (site at :3000, Studio at :3000/studio)
+npm run build                # Manifest extract + schema deploy + `next build` (see Embedded Studio below)
+npm run build:next           # `next build` only — skip Sanity CLI (e.g. no deploy token locally)
+npm run studio:manifest      # Write Studio manifests to `public/studio/static` (org Dashboard)
+npm run studio:schema:deploy # Deploy schema using that manifest (needs auth; see Embedded Studio)
+npm run lint                 # ESLint (next/core-web-vitals + typescript)
+npm run seed                 # Seed Sanity with demo content (requires .env.local)
 ```
 
 No test framework is configured.
@@ -174,6 +177,19 @@ Reusable query fragments live at the top of `src/sanity/lib/queries.ts`:
 - `ctasProjection` — inline projection for a `ctas[]` array of `ctaButton`
 
 Use these in any query that includes link or CTA fields. Raw `label, url, isExternal` without the `coalesce` resolution will break internal page links.
+
+#### Embedded Studio & Sanity org Dashboard
+
+Studio runs inside Next.js at `/studio` (`src/app/studio/`). To integrate with the **Sanity org Dashboard** (studios listed at [sanity.io/manage](https://www.sanity.io/manage)) and schema deployment, the repo follows [Dashboard: configure embedded / Next.js Studio](https://www.sanity.io/docs/dashboard/dashboard-configure):
+
+- **`sanity.config.ts` (repo root)** — Re-exports `src/sanity/sanity.config.ts` so the Sanity CLI resolves config from the project root (`manifest extract`, `schema deploy`).
+- **`sanity.cli.ts` (repo root)** — Supplies `api.projectId` / `api.dataset` for CLI commands; loads `.env*` via `@next/env` the same way Next does when `NODE_ENV !== "production"`.
+- **`npm run build`** — Runs `studio:manifest` → `studio:schema:deploy` → `next build`. Manifest JSON is written to `public/studio/static/` (served at `/studio/static/…` alongside `basePath: "/studio"`). Those files are **gitignored**; each production build regenerates them.
+- **`SANITY_AUTH_TOKEN`** — Deploy token from Sanity Manage (**API → Tokens**, deploy permission). Required on **Vercel** for non-interactive `schema deploy`; optional locally if you have run `sanity login`.
+- **Canonical Studio URL** — In [project settings](https://www.sanity.io/manage), set the public Studio URL to the full path (e.g. `https://client.com/studio`).
+- **Dashboard bridge** — `src/app/studio/layout.tsx` loads `https://core.sanity-cdn.com/bridge.js` (required for **next-sanity** so the org Dashboard can talk to the embedded Studio).
+
+If iframe embedding from the Dashboard is blocked (e.g. `X-Frame-Options` or CSP `frame-ancestors`), adjust headers per the same doc.
 
 #### Other Sanity Files
 
