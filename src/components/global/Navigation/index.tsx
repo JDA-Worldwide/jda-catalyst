@@ -90,6 +90,7 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
   const menuRef = useRef<HTMLUListElement>(null);
   const hasChildren = item.children && item.children.length > 0;
   const cleanUrl = stegaClean(item.url ?? "");
+  const cleanLabel = stegaClean(item.label);
   const isActive = pathname === cleanUrl || pathname.startsWith(cleanUrl + "/");
   const menuId = `desktop-menu-${cleanUrl.replace(/\W/g, "")}`;
 
@@ -140,13 +141,13 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
           href={cleanUrl}
           target={item.isExternal ? "_blank" : undefined}
           rel={item.isExternal ? "noopener noreferrer" : undefined}
-          aria-label={item.isExternal ? `${item.label} (opens in new tab)` : undefined}
+          aria-label={item.isExternal ? `${cleanLabel} (opens in new tab)` : undefined}
           className={cn(
             "rounded px-3 py-2 text-sm font-medium transition-colors hover:bg-brand-surface hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary",
             isActive ? "text-brand-secondary" : "text-brand-text"
           )}
         >
-          {item.label}
+          {cleanLabel}
         </a>
       </li>
     );
@@ -165,7 +166,7 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
         aria-haspopup="true"
         aria-controls={menuId}
       >
-        {item.label}
+        {cleanLabel}
         <svg
           className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
           fill="none"
@@ -185,20 +186,24 @@ function DesktopNavItem({ item, pathname }: { item: NavItem; pathname: string })
           role="menu"
           className="absolute left-0 top-full mt-1 min-w-[200px] rounded border border-brand-border bg-brand-background py-1 shadow-lg"
         >
-          {item.children!.map((child) => (
-            <li key={child.url} role="none">
-              <a
-                href={stegaClean(child.url)}
-                role="menuitem"
-                target={child.isExternal ? "_blank" : undefined}
-                rel={child.isExternal ? "noopener noreferrer" : undefined}
-                aria-label={child.isExternal ? `${child.label} (opens in new tab)` : undefined}
-                className="block px-4 py-2 text-sm text-brand-text hover:bg-brand-surface hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-secondary"
-              >
-                {child.label}
-              </a>
-            </li>
-          ))}
+          {item.children!.map((child) => {
+            const childUrl = stegaClean(child.url);
+            const childLabel = stegaClean(child.label);
+            return (
+              <li key={child.url} role="none">
+                <a
+                  href={childUrl}
+                  role="menuitem"
+                  target={child.isExternal ? "_blank" : undefined}
+                  rel={child.isExternal ? "noopener noreferrer" : undefined}
+                  aria-label={child.isExternal ? `${childLabel} (opens in new tab)` : undefined}
+                  className="block px-4 py-2 text-sm text-brand-text hover:bg-brand-surface hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-secondary"
+                >
+                  {childLabel}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </li>
@@ -209,6 +214,7 @@ function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: s
   const [open, setOpen] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
   const cleanUrl = stegaClean(item.url ?? "");
+  const cleanLabel = stegaClean(item.label);
   const isActive = pathname === cleanUrl || pathname.startsWith(cleanUrl + "/");
   const menuId = `mobile-submenu-${cleanUrl.replace(/\W/g, "")}`;
 
@@ -219,14 +225,14 @@ function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: s
           href={cleanUrl}
           target={item.isExternal ? "_blank" : undefined}
           rel={item.isExternal ? "noopener noreferrer" : undefined}
-          aria-label={item.isExternal ? `${item.label} (opens in new tab)` : undefined}
+          aria-label={item.isExternal ? `${cleanLabel} (opens in new tab)` : undefined}
           onClick={onClose}
           className={cn(
             "block rounded px-3 py-2 text-base font-medium hover:bg-brand-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary",
             isActive ? "text-brand-secondary" : "text-brand-text"
           )}
         >
-          {item.label}
+          {cleanLabel}
         </a>
       </li>
     );
@@ -245,7 +251,7 @@ function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: s
         aria-haspopup="true"
         aria-controls={menuId}
       >
-        {item.label}
+        {cleanLabel}
         <svg
           className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
           fill="none"
@@ -259,20 +265,24 @@ function MobileNavItem({ item, pathname, onClose }: { item: NavItem; pathname: s
       </button>
       {open && (
         <ul id={menuId} className="ml-4 mt-1 space-y-1">
-          {item.children!.map((child) => (
-            <li key={child.url}>
-              <a
-                href={stegaClean(child.url)}
-                target={child.isExternal ? "_blank" : undefined}
-                rel={child.isExternal ? "noopener noreferrer" : undefined}
-                aria-label={child.isExternal ? `${child.label} (opens in new tab)` : undefined}
-                onClick={onClose}
-                className="block rounded px-3 py-2 text-sm text-brand-muted hover:bg-brand-surface hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary"
-              >
-                {child.label}
-              </a>
-            </li>
-          ))}
+          {item.children!.map((child) => {
+            const childUrl = stegaClean(child.url);
+            const childLabel = stegaClean(child.label);
+            return (
+              <li key={child.url}>
+                <a
+                  href={childUrl}
+                  target={child.isExternal ? "_blank" : undefined}
+                  rel={child.isExternal ? "noopener noreferrer" : undefined}
+                  aria-label={child.isExternal ? `${childLabel} (opens in new tab)` : undefined}
+                  onClick={onClose}
+                  className="block rounded px-3 py-2 text-sm text-brand-muted hover:bg-brand-surface hover:text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-secondary"
+                >
+                  {childLabel}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </li>
