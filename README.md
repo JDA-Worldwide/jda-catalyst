@@ -43,6 +43,8 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000) for the site and [http://localhost:3000/studio](http://localhost:3000/studio) for Sanity Studio.
 
+**Production builds:** `npm run build` runs Sanity manifest extraction and schema deployment before `next build`, so the embedded Studio stays aligned with the [Sanity org Dashboard](https://www.sanity.io/docs/dashboard/dashboard-configure). Vercel needs a **`SANITY_AUTH_TOKEN`** (deploy token). To skip those steps (e.g. local `next build` only), use `npm run build:next`.
+
 ### Initialize Sanity
 
 If starting a new Sanity project:
@@ -60,7 +62,7 @@ src/
 │   │   ├── page.tsx         # Homepage
 │   │   ├── [slug]/          # Dynamic pages
 │   │   └── blog/            # Blog listing + posts
-│   ├── studio/              # Embedded Sanity Studio
+│   ├── studio/              # Embedded Sanity Studio (`/studio`)
 │   ├── api/                 # API routes (contact, draft-mode, revalidate, turnstile)
 │   ├── layout.tsx           # Root layout (skip link, metadata)
 │   ├── sitemap.ts           # Dynamic sitemap
@@ -75,12 +77,16 @@ src/
 │   ├── lib/                 # Client, queries, resolve, structure
 │   ├── studio/
 │   │   ├── logo.tsx         # Custom Studio logo component
-│   │   └── WelcomeWidget.tsx # Dashboard overview widget
-│   └── sanity.config.ts     # Studio configuration
+│   │   └── WelcomeWidget.tsx # In-Studio dashboard widget
+│   └── sanity.config.ts     # Studio configuration (imported by Next + root re-export)
 └── lib/
     ├── utils.ts             # cn() helper, formatDate
     ├── jsonLd.tsx           # Schema.org JSON-LD generators + renderer
     └── metadata.ts          # Shared metadata builder
+
+sanity.config.ts             # Repo root — re-export for Sanity CLI (manifest / schema deploy)
+sanity.cli.ts                # Repo root — CLI project id, dataset, env loading
+public/studio/static/        # Generated Studio manifests (gitignored; `npm run build`)
 ```
 
 ## Page Builder Modules
@@ -132,6 +138,8 @@ Brand colors, fonts, spacing, and other tokens are defined in `src/app/globals.c
 | `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset (usually `production`) |
 | `NEXT_PUBLIC_SANITY_API_VERSION` | Sanity API version |
 | `SANITY_API_TOKEN` | Sanity editor token (form submissions + Presentation visual editing) |
+| `SANITY_API_READ_TOKEN` | Viewer token — Live Content API + Draft Mode (see `.env.local.example`) |
+| `SANITY_AUTH_TOKEN` | Deploy token — Vercel builds run `sanity schema deploy` (optional locally if `sanity login`) |
 | `RESEND_API_KEY` | Resend API key for email |
 | `CONTACT_FORM_SENDER` | Sender address for contact emails (must match verified domain) |
 | `CONTACT_FORM_RECIPIENT` | Default recipient for contact form submissions |
@@ -146,10 +154,11 @@ See [SETUP.md](./SETUP.md) for detailed, step-by-step deployment and configurati
 
 1. Push to GitHub
 2. Import in Vercel — framework auto-detected as Next.js
-3. Add all environment variables (see table above, plus per-environment values in SETUP.md)
-4. Set up Sanity webhook for ISR: `https://yourdomain.com/api/revalidate` with `x-sanity-secret` header
-5. Verify Resend sending domain (DNS records)
-6. Add client hostname to shared Turnstile widget
+3. Add all environment variables (see table above and SETUP.md). Include **`SANITY_AUTH_TOKEN`** (deploy token from Sanity Manage → API → Tokens) so `npm run build` can run `sanity schema deploy`.
+4. In [Sanity Manage](https://www.sanity.io/manage), set the project’s **canonical Studio URL** to the live app including the path, e.g. `https://yourdomain.com/studio` ([Dashboard docs](https://www.sanity.io/docs/dashboard/dashboard-configure)).
+5. Set up Sanity webhook for ISR: `https://yourdomain.com/api/revalidate` with `x-sanity-secret` header
+6. Verify Resend sending domain (DNS records)
+7. Add client hostname to shared Turnstile widget
 
 ## Accessibility
 

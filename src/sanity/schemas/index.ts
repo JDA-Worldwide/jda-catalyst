@@ -24,6 +24,7 @@ import testimonials from "./objects/testimonials";
 import faq from "./objects/faq";
 import teamGrid from "./objects/teamGrid";
 import contactForm from "./objects/contactForm";
+import ctaButton from "./objects/ctaButton";
 import pageBuilder from "./objects/pageBuilder";
 
 export const schemaTypes: SchemaTypeDefinition[] = [
@@ -51,5 +52,6 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   faq,
   teamGrid,
   contactForm,
+  ctaButton,
   pageBuilder,
 ];

@@ -1,5 +1,25 @@
 import { groq } from "next-sanity";
 
+// Reusable GROQ fragment — resolves a `link` object's URL from either a
+// pageRef slug (internal) or a plain url string (external).
+const linkFields = /* groq */ `
+  "label": coalesce(label, pageRef->title),
+  isExternal,
+  "url": coalesce("/" + pageRef->slug.current, url)
+`;
+
+// Reusable GROQ fragment — projects a ctaButton item with resolved URL.
+const ctaButtonFields = /* groq */ `
+  _key,
+  label,
+  variant,
+  isExternal,
+  "url": coalesce("/" + pageRef->slug.current, url)
+`;
+
+// Inline projection for a ctas[] array of ctaButton.
+export const ctasProjection = /* groq */ `ctas[] { ${ctaButtonFields} }`;
+
 // --- Global ---
 
 export const settingsQuery = groq`
@@ -8,19 +28,27 @@ export const settingsQuery = groq`
     siteUrl,
     logo,
     defaultSeo,
-    socialLinks
+    socialLinks[] {
+      _key,
+      platform,
+      url
+    }
   }
 `;
 
 export const navigationQuery = groq`
   *[_type == "navigation"][0] {
+    "ctaLabel": coalesce(ctaLabel, ctaPage->title),
+    "ctaUrl": "/" + ctaPage->slug.current,
     items[] {
-      label,
-      url,
+      _key,
+      "label": coalesce(label, pageRef->title),
+      "url": select(isExternal == true => url, "/" + pageRef->slug.current),
       isExternal,
       children[] {
-        label,
-        url,
+        _key,
+        "label": coalesce(label, pageRef->title),
+        "url": select(isExternal == true => url, "/" + pageRef->slug.current),
         isExternal
       }
     }
@@ -30,14 +58,18 @@ export const navigationQuery = groq`
 export const footerQuery = groq`
   *[_type == "footer"][0] {
     columns[] {
+      _key,
       title,
       links[] {
-        label,
-        url,
-        isExternal
+        _key,
+        ${linkFields}
       }
     },
-    socialLinks,
+    socialLinks[] {
+      _key,
+      platform,
+      url
+    },
     copyrightText
   }
 `;

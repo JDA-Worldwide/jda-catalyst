@@ -8,6 +8,8 @@
   --color-brand-muted: #8A7A72;
   --color-brand-background: #FFFFFF;
   --color-brand-surface: #F9F8F7;
+  --color-brand-neutral-1: #E8E4E0;   /* lighter neutral — placeholder, replace per project */
+  --color-brand-neutral-2: #D1CBC4;   /* deeper neutral — placeholder, replace per project */
   --color-brand-border: #D6CFC8;
   --color-brand-text: #4A3F44;
   --color-brand-text-heading: #1A1018;
@@ -21,19 +23,107 @@
   --spacing-section-sm: 3rem;
 
   /* Max widths */
-  --container-content: 75rem;
+  --max-width-container: 90rem;   /* 1440px — full-bleed wrapper */
+  --max-width-content: 75rem;     /* 1200px — content column */
 
   /* Border radius */
   --radius-DEFAULT: 0.375rem;
+  --radius-button: 0.5rem;
 }
 
-body {
-  background: var(--color-brand-background);
-  color: var(--color-brand-text);
-  font-family: var(--font-body);
+/* ── Base Styles ── */
+@layer base {
+  :root {
+    --header-height: 72px; /* update to match Navigation height: logo height + vertical padding × 2 */
+    @media (min-width: 640px) {
+      --header-height: 88px;
+    }
+  }
+
+  body {
+    background: var(--color-brand-background);
+    color: var(--color-brand-text);
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-brand-text-heading);
+    font-family: var(--font-display);
+    font-weight: 600;
+  }
 }
 
-h1, h2, h3, h4, h5, h6 {
-  color: var(--color-brand-text-heading);
-  font-family: var(--font-display);
+/* ── Section Color Schemes ── */
+/* Each scheme re-maps the CSS custom properties so components stay token-based.
+   Update the hardcoded hex values to match the client palette when customising. */
+@layer utilities {
+  /* Dark: primary color as background, white text */
+  .scheme-dark {
+    --color-brand-background: #1A1018;
+    --color-brand-surface: #2a1f27;
+    --color-brand-border: rgba(255, 255, 255, 0.12);
+    --color-brand-text: rgba(255, 255, 255, 0.87);
+    --color-brand-text-heading: #FFFFFF;
+    --color-brand-muted: rgba(255, 255, 255, 0.55);
+    background-color: #1A1018;
+    color: rgba(255, 255, 255, 0.87);
+  }
+
+  .scheme-dark h1,
+  .scheme-dark h2,
+  .scheme-dark h3,
+  .scheme-dark h4,
+  .scheme-dark h5,
+  .scheme-dark h6 {
+    color: #FFFFFF;
+  }
+
+  /* Surface: warm off-white */
+  .scheme-surface {
+    --color-brand-background: #F9F8F7;
+    --color-brand-surface: #EEEAE6;
+    --color-brand-border: #D6CFC8;
+    --color-brand-text: #4A3F44;
+    --color-brand-text-heading: #1A1018;
+    --color-brand-muted: #8A7A72;
+    background-color: #F9F8F7;
+    color: #4A3F44;
+  }
+
+  /* Neutral 1: lighter neutral — replace hex with client's first accent neutral */
+  .scheme-neutral-1 {
+    --color-brand-background: #E8E4E0;
+    --color-brand-surface: #DAD4CE;
+    --color-brand-border: rgba(0, 0, 0, 0.12);
+    --color-brand-text: #4A3F44;
+    --color-brand-text-heading: #1A1018;
+    --color-brand-muted: #6E6460;
+    background-color: #E8E4E0;
+    color: #4A3F44;
+  }
+
+  /* Neutral 2: deeper neutral — replace hex with client's second accent neutral */
+  .scheme-neutral-2 {
+    --color-brand-background: #D1CBC4;
+    --color-brand-surface: #C4BCB4;
+    --color-brand-border: rgba(0, 0, 0, 0.15);
+    --color-brand-text: #4A3F44;
+    --color-brand-text-heading: #1A1018;
+    --color-brand-muted: #5C5450;
+    background-color: #D1CBC4;
+    color: #4A3F44;
+  }
+}
+
+/* ── GSAP Animation Defaults ── */
+/* Elements with data-animate-fadeinup start hidden; JS reveals them on scroll.
+   In Sanity preview (body[data-preview]) we skip animations so editors see content. */
+[data-animate-fadeinup] {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+body[data-preview] [data-animate-fadeinup] {
+  opacity: 1;
+  transform: none;
 }
