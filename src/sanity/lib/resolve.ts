@@ -51,4 +51,7 @@ export const locations = {
     message: "This document is used on all pages",
     tone: "caution",
   }),
+  teamMember: defineLocations({
+    locations: [{ title: "Team page", href: "/team" }],
+  }),
 };

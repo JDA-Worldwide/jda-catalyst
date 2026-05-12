@@ -1,8 +1,10 @@
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
+import { assist } from "@sanity/assist";
 import { presentationTool } from "sanity/presentation";
 import { dashboardTool, projectInfoWidget } from "@sanity/dashboard";
+import { unsplashImageAsset } from "sanity-plugin-asset-source-unsplash";
 import { schemaTypes } from "./schemas";
 import { locations, mainDocuments } from "./lib/resolve";
 import { structure } from "./lib/structure";
@@ -30,6 +32,8 @@ export default defineConfig({
       },
     }),
     visionTool(),
+    assist(),
+    unsplashImageAsset(),
   ],
   schema: {
     types: schemaTypes,
