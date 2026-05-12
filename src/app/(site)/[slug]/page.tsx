@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { sanityFetch } from "@/sanity/lib/live";
 import { pageBySlugQuery, allPagesQuery, settingsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd, webPageSchema } from "@/lib/jsonLd";
 import PageBuilder from "@/components/PageBuilder";
@@ -25,6 +26,7 @@ interface GlobalSettings {
 export async function generateStaticParams() {
   const { data: pages } = await sanityFetch({
     query: allPagesQuery,
+    tags: sanityTags("page"),
     perspective: "published",
     stega: false,
   });
@@ -41,8 +43,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const [{ data: page }, { data: settings }] = await Promise.all([
-    sanityFetch({ query: pageBySlugQuery, params: { slug }, stega: false }),
-    sanityFetch({ query: settingsQuery, stega: false }),
+    sanityFetch({
+      query: pageBySlugQuery,
+      params: { slug },
+      tags: sanityTags("page", "teamMember"),
+      stega: false,
+    }),
+    sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings"), stega: false }),
   ]);
 
   if (!page) return {};
@@ -59,8 +66,12 @@ export default async function DynamicPage({
 }) {
   const { slug } = await params;
   const [{ data: page }, { data: settings }] = await Promise.all([
-    sanityFetch({ query: pageBySlugQuery, params: { slug } }),
-    sanityFetch({ query: settingsQuery }),
+    sanityFetch({
+      query: pageBySlugQuery,
+      params: { slug },
+      tags: sanityTags("page", "teamMember"),
+    }),
+    sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings") }),
   ]);
 
   if (!page) notFound();

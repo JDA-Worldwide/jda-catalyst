@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { sanityFetch } from "@/sanity/lib/live";
 import { blogPostBySlugQuery, allBlogPostsQuery, settingsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 import { urlFor } from "@/sanity/lib/image";
 import { formatDate } from "@/lib/utils";
 import { buildMetadata } from "@/lib/metadata";
@@ -34,6 +35,7 @@ interface GlobalSettings {
 export async function generateStaticParams() {
   const { data } = await sanityFetch({
     query: allBlogPostsQuery,
+    tags: sanityTags("blogPost"),
     perspective: "published",
     stega: false,
   });
@@ -48,8 +50,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const [{ data: post }, { data: settings }] = await Promise.all([
-    sanityFetch({ query: blogPostBySlugQuery, params: { slug }, stega: false }),
-    sanityFetch({ query: settingsQuery, stega: false }),
+    sanityFetch({
+      query: blogPostBySlugQuery,
+      params: { slug },
+      tags: sanityTags("blogPost"),
+      stega: false,
+    }),
+    sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings"), stega: false }),
   ]);
 
   if (!post) return {};
@@ -70,8 +77,12 @@ export default async function BlogPostPage({
 }) {
   const { slug } = await params;
   const [{ data: post }, { data: settings }] = await Promise.all([
-    sanityFetch({ query: blogPostBySlugQuery, params: { slug } }),
-    sanityFetch({ query: settingsQuery }),
+    sanityFetch({
+      query: blogPostBySlugQuery,
+      params: { slug },
+      tags: sanityTags("blogPost"),
+    }),
+    sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings") }),
   ]);
 
   if (!post) notFound();

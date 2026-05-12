@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { sanityFetch } from "@/sanity/lib/live";
 import { homepageQuery, settingsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 import { buildMetadata } from "@/lib/metadata";
 import { JsonLd, webPageSchema } from "@/lib/jsonLd";
 import PageBuilder from "@/components/PageBuilder";
@@ -23,8 +24,12 @@ interface GlobalSettings {
 
 export async function generateMetadata(): Promise<Metadata> {
   const [{ data: page }, { data: settings }] = await Promise.all([
-    sanityFetch({ query: homepageQuery, stega: false }),
-    sanityFetch({ query: settingsQuery, stega: false }),
+    sanityFetch({
+      query: homepageQuery,
+      tags: sanityTags("page", "teamMember"),
+      stega: false,
+    }),
+    sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings"), stega: false }),
   ]);
 
   if (!page) return { title: "Home" };
@@ -35,8 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const [{ data: page }, { data: settings }] = await Promise.all([
-    sanityFetch({ query: homepageQuery }),
-    sanityFetch({ query: settingsQuery }),
+    sanityFetch({ query: homepageQuery, tags: sanityTags("page", "teamMember") }),
+    sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings") }),
   ]);
 
   if (!page) {

@@ -411,10 +411,10 @@ This webhook tells the site to regenerate pages when content changes in Sanity.
    - **Name:** `Vercel ISR Revalidation`
    - **URL:** `https://acme-corp.com/api/revalidate`
    - **Trigger on:** Create, Update, Delete
-   - **Filter:** leave blank to revalidate on any document change
-   - **Secret:** paste the same `SANITY_REVALIDATE_SECRET` value from Vercel
    - **HTTP method:** POST
-   - **HTTP Headers:** add `x-sanity-secret` with the secret value
+   - **Secret:** paste the same `SANITY_REVALIDATE_SECRET` value from Vercel (Sanity signs the body; validation uses the **`sanity-webhook-signature`** header — do **not** add a manual secret header)
+   - **Projection (optional):** `{_type}` so each request revalidates only that document type’s cache tag
+   - **Filter (optional):** GROQ such as `_type in ["page", "blogPost", "globalSettings", "navigation", "footer", "teamMember"]` to limit noise
 5. Save
 
 ### Verify it works

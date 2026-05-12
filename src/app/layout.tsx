@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { settingsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 import { urlFor } from "@/sanity/lib/image";
 import { JsonLd, organizationSchema } from "@/lib/jsonLd";
 import VisualEditingClient from "@/components/global/VisualEditingClient";
@@ -12,6 +13,7 @@ import "./globals.css";
 export async function generateMetadata(): Promise<Metadata> {
   const { data: settings } = await sanityFetch({
     query: settingsQuery,
+    tags: sanityTags("globalSettings"),
     stega: false,
   });
 
@@ -34,7 +36,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { data: settings } = await sanityFetch({ query: settingsQuery });
+  const { data: settings } = await sanityFetch({
+    query: settingsQuery,
+    tags: sanityTags("globalSettings"),
+  });
 
   const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

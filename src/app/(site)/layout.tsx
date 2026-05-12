@@ -1,6 +1,7 @@
 import { draftMode } from "next/headers";
 import { sanityFetch } from "@/sanity/lib/live";
 import { navigationQuery, footerQuery, settingsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 import Navigation from "@/components/global/Navigation";
 import Footer from "@/components/global/Footer";
 import { PreviewProvider } from "@/components/global/PreviewContext";
@@ -14,9 +15,9 @@ export default async function SiteLayout({
 }) {
   const [{ data: navigation }, { data: footer }, { data: settings }, { isEnabled: isPreview }] =
     await Promise.all([
-      sanityFetch({ query: navigationQuery }),
-      sanityFetch({ query: footerQuery }),
-      sanityFetch({ query: settingsQuery }),
+      sanityFetch({ query: navigationQuery, tags: sanityTags("navigation") }),
+      sanityFetch({ query: footerQuery, tags: sanityTags("footer") }),
+      sanityFetch({ query: settingsQuery, tags: sanityTags("globalSettings") }),
       draftMode(),
     ]);
 

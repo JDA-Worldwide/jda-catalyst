@@ -130,6 +130,21 @@ Brand colors, fonts, spacing, and other tokens are defined in `src/app/globals.c
 4. Create the component in `src/components/modules/YourModule/` with `index.tsx` and `types.ts`
 5. Import and add to the `moduleMap` in `src/components/PageBuilder.tsx`
 
+## Sanity webhook (on-demand ISR)
+
+The app exposes `POST /api/revalidate`, which uses `parseBody` from `next-sanity/webhook` to verify Sanity’s **`sanity-webhook-signature`** (the webhook **Secret** in Manage — not a custom `x-sanity-secret` header).
+
+In [sanity.io/manage](https://www.sanity.io/manage) → project → **API → Webhooks**:
+
+- **URL:** `https://<production-domain>/api/revalidate`
+- **Trigger on:** Create, Update, Delete
+- **HTTP method:** POST
+- **Secret:** same value as **`SANITY_REVALIDATE_SECRET`** in Vercel/hosting (strong random string, e.g. `openssl rand -base64 32`)
+- **Projection (optional):** `{_type}` so the handler can call `revalidateTag(_type, "max")` for targeted invalidation
+- **Filter (optional):** GROQ filter such as `_type in ["page", "blogPost", "globalSettings", "navigation", "footer", "teamMember"]` to limit which documents trigger the webhook
+
+If the payload has no `_type`, the route revalidates every tag listed in `src/sanity/lib/revalidateTags.ts` (aligned with `sanityFetch` tags in this app).
+
 ## Environment Variables
 
 | Variable | Description |
@@ -145,7 +160,7 @@ Brand colors, fonts, spacing, and other tokens are defined in `src/app/globals.c
 | `CONTACT_FORM_RECIPIENT` | Default recipient for contact form submissions |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret |
-| `SANITY_REVALIDATE_SECRET` | Secret for Sanity webhook ISR |
+| `SANITY_REVALIDATE_SECRET` | Strong random string shared with the Sanity webhook **Secret** field; validates `sanity-webhook-signature` (built-in signing — do not send a plain-text secret header) |
 | `NEXT_PUBLIC_SITE_URL` | Production site URL |
 
 ## Deployment
@@ -156,7 +171,7 @@ See [SETUP.md](./SETUP.md) for detailed, step-by-step deployment and configurati
 2. Import in Vercel — framework auto-detected as Next.js
 3. Add all environment variables (see table above and SETUP.md). Include **`SANITY_AUTH_TOKEN`** (deploy token from Sanity Manage → API → Tokens) so `npm run build` can run `sanity schema deploy`.
 4. In [Sanity Manage](https://www.sanity.io/manage), set the project’s **canonical Studio URL** to the live app including the path, e.g. `https://yourdomain.com/studio` ([Dashboard docs](https://www.sanity.io/docs/dashboard/dashboard-configure)).
-5. Set up Sanity webhook for ISR: `https://yourdomain.com/api/revalidate` with `x-sanity-secret` header
+5. Set up Sanity [webhook for ISR](#sanity-webhook-on-demand-isr)
 6. Verify Resend sending domain (DNS records)
 7. Add client hostname to shared Turnstile widget
 
