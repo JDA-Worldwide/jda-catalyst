@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { sanityFetch } from "@/sanity/lib/live";
 import { allBlogPostsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 import { formatDate } from "@/lib/utils";
 import SanityImage from "@/components/ui/SanityImage";
 
@@ -19,7 +20,10 @@ interface BlogPostPreview {
 }
 
 export default async function BlogListingPage() {
-  const { data } = await sanityFetch({ query: allBlogPostsQuery });
+  const { data } = await sanityFetch({
+    query: allBlogPostsQuery,
+    tags: sanityTags("blogPost"),
+  });
   const posts = (data ?? []) as BlogPostPreview[];
 
   return (

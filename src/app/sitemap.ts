@@ -1,13 +1,24 @@
 import type { MetadataRoute } from "next";
 import { sanityFetch } from "@/sanity/lib/live";
 import { allPagesQuery, allBlogPostsQuery } from "@/sanity/lib/queries";
+import { sanityTags } from "@/sanity/lib/revalidateTags";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [{ data: pages }, { data: posts }] = await Promise.all([
-    sanityFetch({ query: allPagesQuery, perspective: "published", stega: false }),
-    sanityFetch({ query: allBlogPostsQuery, perspective: "published", stega: false }),
+    sanityFetch({
+      query: allPagesQuery,
+      tags: sanityTags("page"),
+      perspective: "published",
+      stega: false,
+    }),
+    sanityFetch({
+      query: allBlogPostsQuery,
+      tags: sanityTags("blogPost"),
+      perspective: "published",
+      stega: false,
+    }),
   ]);
 
   const typedPages = (pages ?? []) as { slug: string }[];
