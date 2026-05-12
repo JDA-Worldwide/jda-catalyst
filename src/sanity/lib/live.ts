@@ -36,7 +36,7 @@ import { token } from "./token";
 
 const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION ?? "2026-02-01";
 
-export const { sanityFetch, SanityLive } = defineLive({
+export const { sanityFetch, SanityLive, handleDraftModeAction } = defineLive({
   client: client.withConfig({ apiVersion }),
   serverToken: token,
   browserToken: token,
