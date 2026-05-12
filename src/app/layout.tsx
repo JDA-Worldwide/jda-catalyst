@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { sanityFetch, SanityLive } from "@/sanity/lib/live";
+import { sanityFetch, SanityLive, handleDraftModeAction } from "@/sanity/lib/live";
 import { settingsQuery } from "@/sanity/lib/queries";
 import { sanityTags } from "@/sanity/lib/revalidateTags";
 import { urlFor } from "@/sanity/lib/image";
@@ -44,7 +44,7 @@ export default async function RootLayout({
   const siteUrl = settings?.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         <a
           href="#main-content"
@@ -63,7 +63,7 @@ export default async function RootLayout({
           />
         )}
         {children}
-        <SanityLive />
+        <SanityLive handleDraftModeAction={handleDraftModeAction} />
         {(await draftMode()).isEnabled && <VisualEditingClient />}
         <Analytics />
         <SpeedInsights />
